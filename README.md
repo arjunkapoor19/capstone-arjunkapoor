@@ -1,38 +1,27 @@
-Template for creating and submitting MAT496 capstone project.
-
-# Overview of MAT496
-
-In this course, we have primarily learned Langgraph. This is helpful tool to build apps which can process unstructured `text`, find information we are looking for, and present the format we choose. Some specific topics we have covered are:
-
-- Prompting
-- Structured Output 
-- Semantic Search
-- Retreaval Augmented Generation (RAG)
-- Tool calling LLMs & MCP
-- Langgraph: State, Nodes, Graph
-
-We also learned that Langsmith is a nice tool for debugging Langgraph codes.
-
-------
-
-# Capstone Project objective
-
-The first purpose of the capstone project is to give a chance to revise all the major above listed topics. The second purpose of the capstone is to show your creativity. Think about all the problems which you can not have solved earlier, but are not possible to solve with the concepts learned in this course. For example, We can use LLM to analyse all kinds of news: sports news, financial news, political news. Another example, we can use LLMs to build a legal assistant. Pretty much anything which requires lots of reading, can be outsourced to LLMs. Let your imagination run free.
-
-
--------------------------
-
-# Project report Template
-
-## Title: [your title goes here]
+## Title: Stock Market News-Pattern Intelligence Agent
 
 ## Overview
 
-[your overview goes here. My project does this that  etc]
+This project builds an AI agent that explains why a stock moved a certain way by connecting news sentiment to price patterns.
+Given a stock ticker and date range, the agent:
+
+1. Fetches relevant financial news
+
+2. Extracts sentiment + important events using LLM structured analysis
+
+3. Pulls market price data and detects common technical patterns
+
+4. Correlates specific news events with bullish/bearish movements
+
+6. Produces an easy-to-read report summarizing insights
+
+It transforms raw news to trading intelligence.
 
 ## Reason for picking up this project
 
-Explain how this project is aligned with this course content.
+I have always had a liking and inquistivity for financial markets. This project seemed like the perfect opportunity to work on something like this. 
+
+As for how all the course elements will be covered, prompting & structured output will be used for pydantic schemas for sentiment & event extraction, semantic search to filter and fetch relevant market news, a RAG will be used for financial news retrieval and glossary contexts. Tool calling will be used for web search and market data API. Most importantly LangGraph will be used for multi-node workflow orchestration and persistent state.
 
 ## Video Summary Link: 
 
@@ -50,34 +39,23 @@ Make a short -  3-5 min video of yourself, put it on youtube/googledrive, and pu
 
 I plan to execute these steps to complete my project.
 
-- [TODO] Step 1 involves blah blah
-- [TODO] Step 2 involves blah blah
-- [TODO] Step 3 involves blah blah
-- ...
-- [TODO] Step n involves blah blah
+- [DONE] Step 1 involves setting up the GitHub repository, adding a basic project structure, and writing an initial README with the project overview and goals.
+- [TODO] Step 2 involves defining the LangGraph state schema (ticker, date range, articles, sentiments, patterns, final report) using Pydantic models.
+- [TODO] Step 3 involves implementing a news fetching step that uses a web/news API or tool to retrieve articles for a given stock ticker and date range, with basic error handling.
+- [TODO] Step 4 involves designing prompt templates and structured output schemas for sentiment and event extraction from each news article.
+- [TODO] Step 5 involves creating a sentiment extraction node that runs the LLM on each article and stores structured sentiment + event tags in the LangGraph state.
+- [TODO] Step 6 involves implementing market data fetching (price history for the ticker over the same date range) and simple technical pattern detection logic (e.g., bullish/bearish moves, breakouts, reversals).
+- [TODO] Step 7 involves writing correlation logic that maps news sentiment/events to detected market patterns (e.g., negative sentiment around dates where a bearish reversal occurs).
+- [TODO] Step 8 involves building a report generation node that turns the correlated data into a readable, structured textual report for the user.
+- [TODO] Step 9 involves connecting all nodes into a complete LangGraph workflow with proper state transitions from user input → news → analysis → patterns → report.
+- [TODO] Step 10 involves running an end-to-end example with a real stock ticker and date range, verifying correctness, and adjusting prompts/logic as needed.
+- [TODO] Step 11 involves adding robust error handling, logging, and handling edge cases (no news found, API failures, insufficient data) across the workflow.
+- [TODO] Step 12 involves polishing documentation, updating the README with usage instructions and the video summary link, and writing the final conclusion reflecting on what was achieved.
 
 ## Conclusion:
 
-I had planned to achieve {this this}. I think I have/have-not achieved the conclusion satisfactorily. The reason for your satisfaction/unsatisfaction.
-
-----------
-
-# Added instructions:
-
-- This is a `solo assignment`. Each of you will work alone. You are free to talk, discuss with chatgpt, but you are responsible for what you submit. Some students may be called for viva. You should be able to each and every line of work submitted by you.
-
-- `commit` History maintenance.
-  - Fork this repository and build on top of that.
-  - For every step in your plan, there has to be a commit.
-  - Change [TODO] to [DONE] in the plan, before you commit after that step. 
-  - The commit history should show decent amount of work spread into minimum two dates. 
-  - **All the commits done in one day will be rejected**. Even if you are capable of doing the whole thing in one day, refine it in two days.  
- 
- - Deadline: Dec 2nd, Tuesday 11:59 pm
+After completion.
 
 
-# Grading: total 25 marks
 
-- Coverage of most of topics in this class: 20
-- Creativity: 5
   
