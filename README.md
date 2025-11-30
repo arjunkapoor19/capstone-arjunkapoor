@@ -41,7 +41,7 @@ I plan to execute these steps to complete my project.
 
 - [DONE] Step 1 involves setting up the GitHub repository, adding a basic project structure, and writing an initial README with the project overview and goals.
 - [DONE] Step 2 involves defining the LangGraph state schema (ticker, date range, articles, sentiments, patterns, final report) using TypedDict models.
-- [TODO] Step 3 involves implementing a news fetching step that uses a web/news API or tool to retrieve articles for a given stock ticker and date range, with basic error handling.
+- [DONE] Step 3 involves implementing a news fetching step that uses a web/news API or tool to retrieve articles for a given stock ticker and date range, with basic error handling.
 - [TODO] Step 4 involves designing prompt templates and structured output schemas for sentiment and event extraction from each news article.
 - [TODO] Step 5 involves creating a sentiment extraction node that runs the LLM on each article and stores structured sentiment + event tags in the LangGraph state.
 - [TODO] Step 6 involves implementing market data fetching (price history for the ticker over the same date range) and simple technical pattern detection logic (e.g., bullish/bearish moves, breakouts, reversals).
