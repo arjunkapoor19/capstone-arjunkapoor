@@ -19,7 +19,13 @@ def _fetch_price_history(ticker: str, start_date: str, end_date: str) -> List[Pr
         return []
 
     try:
-        data = yf.download(ticker, start=start_date, end=end_date, progress=False)
+        data = yf.download(
+            ticker,
+            start=start_date,
+            end=end_date,
+            progress=False,
+            auto_adjust=False,  # prevent future default warnings
+        )
     except Exception as e:
         logger.error("Failed to fetch price history for %s: %s", ticker, e)
         return []
@@ -29,20 +35,20 @@ def _fetch_price_history(ticker: str, start_date: str, end_date: str) -> List[Pr
         return []
 
     prices: List[PriceBar] = []
-    for idx, (idx_date, row) in enumerate(data.iterrows()):
+    for idx_date, row in data.iterrows():
         try:
             prices.append(
                 {
                     "date": idx_date.strftime("%Y-%m-%d"),
-                    "open": float(row["Open"]),
-                    "high": float(row["High"]),
-                    "low": float(row["Low"]),
-                    "close": float(row["Close"]),
-                    "volume": int(row.get("Volume", 0)),
+                    "open": float(row["Open"].item()),
+                    "high": float(row["High"].item()),
+                    "low": float(row["Low"].item()),
+                    "close": float(row["Close"].item()),
+                    "volume": int(row.get("Volume", 0).item() if hasattr(row.get("Volume", None), "item") else int(row.get("Volume", 0))),
                 }
             )
         except Exception as e:
-            logger.warning("Skipping malformed OHLCV row %d for %s: %s", idx, ticker, e)
+            logger.warning("Skipping malformed OHLCV row at %s for %s: %s", idx_date, ticker, e)
             continue
 
     logger.info("Fetched %d OHLCV bars for %s", len(prices), ticker)

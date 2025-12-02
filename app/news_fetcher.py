@@ -1,7 +1,6 @@
 import os
 import logging
 from typing import List
-from datetime import datetime
 
 import requests
 from openai import OpenAI
@@ -28,41 +27,46 @@ def _generate_synthetic_articles(ticker: str, start_date: str, end_date: str) ->
     - summary
     - full_text
     - source
-    - ISO timestamp
-    Return valid JSON list, no prose.
+    - ISO timestamp (published_at)
+    Return a JSON array, no extra text.
     """
 
     resp = client.chat.completions.create(
         model="gpt-4.1-mini",
         messages=[
-            {"role": "system", "content": "You generate stock news"},
+            {"role": "system", "content": "You generate plausible but synthetic stock news."},
             {"role": "user", "content": prompt},
         ],
         temperature=0.7,
     )
 
     import json
-    content = resp.choices[0].message.content.strip()
+    content = (resp.choices[0].message.content or "").strip()
     content = content.replace("```json", "").replace("```", "").strip()
 
     try:
         data = json.loads(content)
+        if not isinstance(data, list):
+            raise ValueError("Synthetic news is not a list")
     except Exception as e:
         logger.error("Synthetic JSON parse error: %s", e)
         data = []
 
-    articles = []
+    articles: List[Article] = []
     for idx, a in enumerate(data):
-        articles.append({
-            "id": f"{ticker}-synthetic-{idx}",
-            "ticker": ticker,
-            "title": a.get("title", ""),
-            "url": "",
-            "published_at": a.get("published_at", f"{start_date}T00:00:00Z"),
-            "source": a.get("source", "SyntheticWire"),
-            "summary": a.get("summary", ""),
-            "full_text": a.get("full_text", a.get("summary", "")),
-        })
+        articles.append(
+            {
+                "id": f"{ticker}-synthetic-{idx}",
+                "ticker": ticker,
+                "title": a.get("title", ""),
+                "url": "",
+                "published_at": a.get("published_at", f"{start_date}T00:00:00Z"),
+                "source": a.get("source", "SyntheticWire"),
+                "summary": a.get("summary", ""),
+                "full_text": a.get("full_text", a.get("summary", "")),
+            }
+        )
+    logger.info("Generated %d synthetic articles for %s.", len(articles), ticker)
     return articles
 
 
@@ -89,29 +93,56 @@ def fetch_news_for_ticker(ticker: str, start_date: str, end_date: str, max_resul
         res = r.json()
         news_data = res.get("data", [])
 
-        # Validate API structure
         if not isinstance(news_data, list):
             logger.warning("MarketAux returned unexpected data format")
             return _generate_synthetic_articles(ticker, start_date, end_date)
 
         if len(news_data) == 0:
-            logger.warning("MarketAux returned zero relevant articles")
+            logger.warning("MarketAux returned zero articles for %s", ticker)
             return _generate_synthetic_articles(ticker, start_date, end_date)
 
-        articles = []
-        for idx, n in enumerate(news_data):
-            articles.append({
-                "id": f"{ticker}-{idx}",
-                "ticker": ticker,
-                "title": n.get("title", ""),
-                "url": n.get("url", ""),
-                "published_at": n.get("published_at", f"{start_date}T00:00:00Z"),
-                "source": n.get("source", "Unknown"),
-                "summary": n.get("description", ""),
-                "full_text": n.get("description", ""),
-            })
+        # Filter out garbage / non-ticker-related articles
+        filtered = []
+        ticker_l = ticker.lower()
+        extra_keywords = [ticker_l]
+        if ticker.upper() == "AAPL":
+            extra_keywords.append("apple")
 
-        logger.info("Fetched %d real news articles", len(articles))
+        for idx, n in enumerate(news_data):
+            text = " ".join(
+                [
+                    str(n.get("title", "")),
+                    str(n.get("description", "")),
+                    str(n.get("snippet", "")),
+                ]
+            ).lower()
+
+            if any(kw in text for kw in extra_keywords):
+                filtered.append(n)
+
+        if not filtered:
+            logger.warning(
+                "MarketAux articles not clearly about %s; falling back to synthetic ticker-specific news.",
+                ticker,
+            )
+            return _generate_synthetic_articles(ticker, start_date, end_date)
+
+        articles: List[Article] = []
+        for idx, n in enumerate(filtered):
+            articles.append(
+                {
+                    "id": f"{ticker}-{idx}",
+                    "ticker": ticker,
+                    "title": n.get("title", ""),
+                    "url": n.get("url", ""),
+                    "published_at": n.get("published_at", f"{start_date}T00:00:00Z"),
+                    "source": n.get("source", "Unknown"),
+                    "summary": n.get("description", n.get("snippet", "")),
+                    "full_text": n.get("description", n.get("snippet", "")),
+                }
+            )
+
+        logger.info("Fetched %d relevant real news articles for %s", len(articles), ticker)
         return articles
 
     except Exception as e:

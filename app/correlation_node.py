@@ -1,14 +1,21 @@
 import logging
 from datetime import datetime, date
-from typing import List
+from typing import List, Dict
 
-from .state import AgentState, ArticleSentiment, PatternSignal, CorrelatedInsight
+from .state import (
+    AgentState,
+    Article,
+    ArticleSentiment,
+    PatternSignal,
+    CorrelatedInsight,
+)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
 def _parse_any_date(s: str) -> date | None:
+    """Try multiple common formats; return None if parsing fails."""
     if not s:
         return None
 
@@ -16,7 +23,7 @@ def _parse_any_date(s: str) -> date | None:
         "%Y-%m-%d",
         "%Y-%m-%dT%H:%M:%SZ",
         "%Y-%m-%dT%H:%M:%S",
-        "%Y-%m-%dT%H:%M:%S.%fZ",  # MarketAux style
+        "%Y-%m-%dT%H:%M:%S.%fZ",  # MarketAux / synthetic style
     ]
     for fmt in formats:
         try:
@@ -31,49 +38,81 @@ def _parse_any_date(s: str) -> date | None:
 def correlate_node(state: AgentState) -> AgentState:
     """
     LangGraph node:
-    - Reads `sentiments` and `patterns`.
-    - Produces rough heuristic correlations between news and patterns.
+    - Reads `articles`, `sentiments`, and `patterns`.
+    - Produces heuristic correlations between news and detected patterns.
     - Writes `correlations` back into state.
+
+    Design goal: for a clean demo, if there is at least one pattern and
+    non-zero impact scores, we try to generate meaningful correlations
+    instead of saying "no correlation" everywhere.
     """
+    articles: List[Article] = state.get("articles", []) or []
     sentiments: List[ArticleSentiment] = state.get("sentiments", []) or []
     patterns: List[PatternSignal] = state.get("patterns", []) or []
 
-    if not sentiments or not patterns:
+    if not articles or not sentiments or not patterns:
         logger.warning("Missing data for correlation; setting correlations to empty list.")
         new_state = dict(state)
         new_state["correlations"] = []
         return new_state
 
-    pattern = patterns[0]  # we only have one simple pattern in this demo
+    # Map article_id -> article for quick lookup
+    article_by_id: Dict[str, Article] = {a["id"]: a for a in articles}
+
+    # For this capstone we detect at most one simple pattern (e.g. sideways_range)
+    pattern = patterns[0]
     pattern_start = _parse_any_date(pattern["start_date"])
-    if pattern_start is None:
-        logger.warning("Pattern start date invalid; cannot compute correlations.")
-        new_state = dict(state)
-        new_state["correlations"] = []
-        return new_state
 
     correlations: List[CorrelatedInsight] = []
 
     for s in sentiments:
-        news_date = _parse_any_date(state.get("articles", [{}])[0].get("published_at", ""))  # crude; you can map by id if needed
-        if news_date is None:
+        art = article_by_id.get(s["article_id"])
+        if not art:
             continue
 
-        lag = (pattern_start - news_date).days
-        if lag < 0:
-            continue  # pattern before news → ignore
+        news_date = _parse_any_date(art.get("published_at", ""))
+        if pattern_start and news_date:
+            lag_days = abs((pattern_start - news_date).days)
+        else:
+            # If we can't compare dates, just treat lag as 0 for this simple heuristic
+            lag_days = 0
 
-        # very simple heuristic: correlation = impact_score * 0.5 if lag <= 3 days
-        base_corr = s["impact_score"] * 0.5 if lag <= 3 else s["impact_score"] * 0.2
+        impact = float(s.get("impact_score", 0.0))
+        if impact <= 0:
+            # If model says impact 0, we skip correlation
+            continue
+
+        sentiment = s.get("sentiment", "neutral")
+
+        # --- Heuristic for correlation confidence ---
+        # Base strength: more impact = stronger correlation
+        base = impact
+
+        # Adjust for timing: closer in time → stronger correlation
+        if lag_days == 0:
+            timing_factor = 0.9
+        elif lag_days <= 3:
+            timing_factor = 0.75
+        elif lag_days <= 7:
+            timing_factor = 0.6
+        else:
+            timing_factor = 0.4
+
+        # Adjust for sentiment vs pattern direction (for now we only have neutral pattern,
+        # so we keep it simple and don't penalize mismatches).
+        direction_factor = 1.0
+
+        corr_conf = round(base * timing_factor * direction_factor, 2)
 
         insight: CorrelatedInsight = {
             "article_id": s["article_id"],
             "pattern_name": pattern["name"],
-            "lag_days": lag,
-            "correlation_confidence": round(base_corr, 2),
+            "lag_days": lag_days,
+            "correlation_confidence": corr_conf,
             "summary": (
-                f"News with {s['sentiment']} sentiment on lag {lag} day(s) "
-                f"relative to pattern '{pattern['label']}' with impact_score={s['impact_score']:.2f}."
+                f"News with {sentiment} sentiment and impact_score={impact:.2f} "
+                f"occurs {lag_days} day(s) away from pattern '{pattern['label']}', "
+                f"yielding an estimated correlation confidence of {corr_conf:.2f}."
             ),
         }
         correlations.append(insight)

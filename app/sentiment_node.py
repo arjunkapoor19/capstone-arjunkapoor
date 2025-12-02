@@ -18,6 +18,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 def _build_sentiment_prompt(article: Article) -> str:
+    """Build a compact JSON-like payload for the LLM."""
     return json.dumps(
         {
             "title": article["title"],
@@ -28,10 +29,23 @@ def _build_sentiment_prompt(article: Article) -> str:
     )
 
 
+def _clamp_01(x) -> float:
+    try:
+        v = float(x)
+    except Exception:
+        return 0.0
+    if v < 0:
+        return 0.0
+    if v > 1:
+        # if model gives something like 3 or 5, just clamp to 1
+        return 1.0
+    return v
+
+
 def _analyze_single_article(article: Article) -> ArticleSentiment:
     """
     Call the LLM once for a single article and return structured sentiment.
-    Robust to model/JSON failures: falls back to neutral.
+    Robust to model/JSON failures: falls back to neutral instead of crashing.
     """
     try:
         resp = client.chat.completions.create(
@@ -41,9 +55,10 @@ def _analyze_single_article(article: Article) -> ArticleSentiment:
                     "role": "system",
                     "content": (
                         "You are a financial news sentiment analyst. "
-                        "Given a news article about a specific stock, you output a "
-                        "JSON object with fields: sentiment, confidence, event_tags, "
-                        "impact_score, reasoning."
+                        "Respond ONLY with a JSON object, no prose. "
+                        "The JSON must have keys: sentiment ('positive'|'neutral'|'negative'), "
+                        "confidence (0-1), event_tags (list of short strings), "
+                        "impact_score (0-1), reasoning (short string)."
                     ),
                 },
                 {
@@ -58,7 +73,16 @@ def _analyze_single_article(article: Article) -> ArticleSentiment:
         if raw_content.startswith("```"):
             raw_content = raw_content.replace("```json", "").replace("```", "").strip()
 
-        struct = SentimentOutput.model_validate_json(raw_content)
+        # First parse into dict so we can clamp numeric ranges
+        data = json.loads(raw_content)
+        if not isinstance(data, dict):
+            raise ValueError("Sentiment response is not a JSON object")
+
+        # Clamp numeric fields into [0, 1] to satisfy the Pydantic schema
+        data["impact_score"] = _clamp_01(data.get("impact_score", 0.0))
+        data["confidence"] = _clamp_01(data.get("confidence", 0.0))
+
+        struct = SentimentOutput.model_validate(data)
 
     except Exception as e:
         logger.error(
