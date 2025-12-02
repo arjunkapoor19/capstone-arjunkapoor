@@ -1,14 +1,17 @@
 import os
+import logging
 from pprint import pprint
 
 from .state import AgentState
 from .graph import build_graph
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 def run_example():
     """
     Run an example end-to-end pipeline for a given ticker and date range.
-    Adjust the ticker and dates as you like for your demo.
     """
     ticker = os.getenv("EXAMPLE_TICKER", "AAPL")
     start_date = os.getenv("EXAMPLE_START_DATE", "2024-11-20")
@@ -21,7 +24,12 @@ def run_example():
     }
 
     graph = build_graph()
-    final_state = graph.invoke(initial_state)
+
+    try:
+        final_state = graph.invoke(initial_state)
+    except Exception as e:
+        logger.critical("Pipeline crashed unexpectedly: %s", e, exc_info=True)
+        return
 
     report = final_state.get("report_markdown", "")
     print("\n" + "=" * 80)
