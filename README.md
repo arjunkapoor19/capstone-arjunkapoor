@@ -49,7 +49,7 @@ I plan to execute these steps to complete my project.
 - [DONE] Step 8 involves building a report generation node that turns the correlated data into a readable, structured textual report for the user.
 - [DONE] Step 9 involves connecting all nodes into a complete LangGraph workflow with proper state transitions from user input → news → analysis → patterns → report.Add example run with real stock ticker, test end-to-end pipeline
 - [DONE] Step 10 involves running an end-to-end example with a real stock ticker and date range, verifying correctness, and adjusting prompts/logic as needed.
-- [TODO] Step 11 involves adding robust error handling, logging, and handling edge cases (no news found, API failures, insufficient data) across the workflow.
+- [DONE] Step 11 involves adding robust error handling, logging, and handling edge cases (no news found, API failures, insufficient data) across the workflow.
 - [TODO] Step 12 involves polishing documentation, updating the README with usage instructions and the video summary link, and writing the final conclusion reflecting on what was achieved.
 
 ## Conclusion:
