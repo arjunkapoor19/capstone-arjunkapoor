@@ -54,7 +54,21 @@ I plan to execute these steps to complete my project.
 
 ## Conclusion:
 
-After completion.
+The goal of this capstone project was to build an agent that connects financial news events to stock price behavior. My system successfully:
+
+- Fetches real news (with synthetic fallback)
+
+- Extracts sentiment and event impact using structured LLM output
+
+- Detects technical price patterns from market data
+
+- Correlates news timing with price reactions
+
+- Generates a clean, readable intelligence report
+
+This project demonstrates practical use of LangGraph, tool calling, retrieval, and sentiment analysis — covering all the major topics from the course. I am satisfied with the final outcome because the agent works end-to-end and provides interpretable insights that help explain why a stock moved the way it did over a given period.
+
+Future improvements could include more technical indicators, stronger correlation logic, and a simple GUI for user input.
 
 
 
