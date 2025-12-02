@@ -13,9 +13,9 @@ def run_example():
     """
     Run an example end-to-end pipeline for a given ticker and date range.
     """
-    ticker = os.getenv("EXAMPLE_TICKER", "AAPL")
-    start_date = os.getenv("EXAMPLE_START_DATE", "2024-11-20")
-    end_date = os.getenv("EXAMPLE_END_DATE", "2024-11-29")
+    ticker = "AAPL"
+    start_date ="2024-11-20"
+    end_date = "2024-11-29"
 
     initial_state: AgentState = {
         "ticker": ticker,

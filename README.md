@@ -25,14 +25,7 @@ As for how all the course elements will be covered, prompting & structured outpu
 
 ## Video Summary Link: 
 
-Make a short -  3-5 min video of yourself, put it on youtube/googledrive, and put its link in your README.md.
-
-- you can use this free tool for recording https://screenrec.com/
-- Video format should be like this:
-- your face should be visible
-- State the overall job of your agent: what inputs it takes, and what output it gives.
-- Very quickly, explain how your agent acts on the input and spits out the output. 
-- show an example run of the agent in the video
+[https://youtu.be/2OgA2zGOHic](https://youtu.be/2OgA2zGOHic)
 
 
 ## Plan
