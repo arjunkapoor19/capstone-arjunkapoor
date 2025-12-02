@@ -77,11 +77,11 @@ def fetch_price_history(
         for idx, (date, row) in enumerate(data.iterrows()):
             bar: PriceBar = {
                 "date": date.strftime("%Y-%m-%d"),
-                "open": float(row["Open"]),
-                "high": float(row["High"]),
-                "low": float(row["Low"]),
-                "close": float(row["Close"]),
-                "volume": int(row.get("Volume", 0)),
+                "open": float(row["Open"].item()),
+                "high": float(row["High"].item()),
+                "low": float(row["Low"].item()),
+                "close": float(row["Close"].item()),
+                "volume": int(row.get("Volume", 0).item() if "Volume" in row else 0),
             }
             prices.append(bar)
 

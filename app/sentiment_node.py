@@ -10,6 +10,10 @@ from .analysis_schemas import SentimentOutput
 from .prompts import SENTIMENT_SYSTEM_PROMPT, build_sentiment_user_prompt
 
 
+from dotenv import load_dotenv
+load_dotenv()
+
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
@@ -56,7 +60,7 @@ def _analyze_single_article(article: Article) -> ArticleSentiment:
         )
 
     result: ArticleSentiment = {
-        "article_id": sentiment_struct.article_id or article["id"],
+        "article_id": article["id"],
         "sentiment": sentiment_struct.sentiment,
         "confidence": float(sentiment_struct.confidence),
         "event_tags": list(sentiment_struct.event_tags),

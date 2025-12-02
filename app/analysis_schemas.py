@@ -10,10 +10,6 @@ class SentimentOutput(BaseModel):
     Structured output for sentiment + event extraction from a single article.
     This matches the ArticleSentiment TypedDict shape from state.py.
     """
-    article_id: str = Field(
-        ...,
-        description="ID of the article this analysis refers to.",
-    )
     sentiment: SentimentLabel = Field(
         ...,
         description="Overall sentiment of the article toward the stock: positive, neutral, or negative.",
